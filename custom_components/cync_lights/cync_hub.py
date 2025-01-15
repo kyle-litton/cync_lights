@@ -749,10 +749,7 @@ class CyncUserData:
         _LOGGER.error(f'Recieved details about homes on Cync account: {homes}')
         for home in homes:
             home_info = await self._get_home_properties(home['product_id'], home['id'])
-            # Handle {'error': 'device property not exists')
-            if "error" in home_info:
-                _LOGGER.warning(f"Home {home['id']} returned an error: {home_info['error']}")
-                continue
+            
             if home_info.get('groupsArray', False) and home_info.get('bulbsArray', False) and len(home_info['groupsArray']) > 0 and len(home_info['bulbsArray']) > 0:
                 home_id = str(home['id'])
                 bulbs_array_length = max([((device['deviceID'] % home['id']) % 1000) + (int((device['deviceID'] % home['id']) / 1000) * 256) for device in home_info['bulbsArray']]) + 1
@@ -781,7 +778,7 @@ class CyncUserData:
                                         }
                     if str(device_type) in Capabilities['MULTIELEMENT'] and current_index < 256:
                         devices[device_id]['MULTIELEMENT'] = Capabilities['MULTIELEMENT'][str(device_type)]
-                    if devices[device_id].get('WIFICONTROL', False) and 'switchID' in device and device['switchID'] > 0:
+                    if devices[device_id].get('WIFICONTROL', False) and 'switchID' in device and int(device['switchID']) > 0:
                         switchID_to_homeID[str(device['switchID'])] = home_id
                         devices[device_id]['switch_controller'] = device['switchID']
                         home_controllers[home_id].append(device['switchID'])
