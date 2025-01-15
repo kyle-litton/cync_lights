@@ -1,3 +1,5 @@
+Fork of https://github.com/nikshriv/cync_lights - used to test changes in HomeAssistant using HACS to pull changes directly after commit...
+
 Cync Lights Custom Integration
 ============
 Control and monitor the state of your Cync Light switches, bulbs, fan switches and plugs. This integration is no longer dependent on Google Home. The integration requires that you have at least one Wifi connected light switch, bulb, fan switch, or plug in your system to allow for control (including bluetooth only devices). The integration will not work if you have only bluetooth devices without a WiFi connected device in your system. 

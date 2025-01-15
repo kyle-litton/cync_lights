@@ -22,8 +22,8 @@ Capabilities = {
     "RGB":[6,7,8,21,22,23,30,31,32,33,34,35,131,132,133,137,138,139,140,141,142,143,146,147,153,154,155,156,158,159,160,161,162,163,164,165,169,170],
     "MOTION":[37,49,54],
     "AMBIENT_LIGHT":[37,49,54],
-    "WIFICONTROL":[36,37,38,39,40,48,49,51,52,53,54,55,56,57,58,59,61,62,63,64,65,66,67,68,80,81,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,158,159,160,161,162,163,164,165,169,170],
-    "PLUG":[64,65,66,67,68],
+    "WIFICONTROL":[36,37,38,39,40,48,49,51,52,53,54,55,56,57,58,59,61,62,63,64,65,66,67,68,80,81,128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,158,159,160,161,162,163,164,165,169,170,172],
+    "PLUG":[64,65,66,67,68,172],
     "FAN":[81],
     "MULTIELEMENT":{'67':2}
 }
@@ -403,21 +403,21 @@ class CyncRoom:
         while not update_received and attempts < int(self._command_retry_time/self._command_timout):
             seq = str(self.hub.get_seq_num())
             if len(self.controllers) > 0:
-                controller = self.controllers[attempts%len(self.controllers)]
+                controller = self.controllers[attempts % len(self.controllers)]
             else:
                 controller = self.default_controller
+            _LOGGER.debug(f"Sending turn_on command to controller {controller} with seq {seq}")
             if attr_rgb is not None and attr_br is not None:
-                if math.isclose(attr_br, max([self.rgb['r'],self.rgb['g'],self.rgb['b']])*self.brightness/100, abs_tol = 2):
+                if math.isclose(attr_br, max([self.rgb['r'], self.rgb['g'], self.rgb['b']]) * self.brightness / 100, abs_tol=2):
                     self.hub.combo_control(True, self.brightness, 254, attr_rgb, controller, self.mesh_id, seq)
                 else:
-                    self.hub.combo_control(True, round(attr_br*100/255), 255, [255,255,255], controller, self.mesh_id, seq)
+                    self.hub.combo_control(True, round(attr_br * 100 / 255), 255, [255, 255, 255], controller, self.mesh_id, seq)
             elif attr_rgb is None and attr_ct is None and attr_br is not None:
-                self.hub.combo_control(True, round(attr_br*100/255), 255, [255,255,255], controller, self.mesh_id, seq)
+                self.hub.combo_control(True, round(attr_br * 100 / 255), 255, [255, 255, 255], controller, self.mesh_id, seq)
             elif attr_rgb is not None and attr_br is None:
                 self.hub.combo_control(True, self.brightness, 254, attr_rgb, controller, self.mesh_id, seq)
             elif attr_ct is not None:
-                ct = round(100*(self.max_mireds - attr_ct)/(self.max_mireds - self.min_mireds))
-                self.hub.turn_on(controller, self.mesh_id, seq)
+                ct = round(100 * (self.max_mireds - attr_ct) / (self.max_mireds - self.min_mireds))
                 self.hub.set_color_temp(ct, controller, self.mesh_id, seq)
             else:
                 self.hub.turn_on(controller, self.mesh_id, seq)
@@ -554,20 +554,21 @@ class CyncSwitch:
         while not update_received and attempts < int(self._command_retry_time/self._command_timout):
             seq = str(self.hub.get_seq_num())
             if len(self.controllers) > 0:
-                controller = self.controllers[attempts%len(self.controllers)]
+                controller = self.controllers[attempts % len(self.controllers)]
             else:
                 controller = self.default_controller
+            _LOGGER.debug(f"Sending turn_on command to controller {controller} with seq {seq}")
             if attr_rgb is not None and attr_br is not None:
-                if math.isclose(attr_br, max([self.rgb['r'],self.rgb['g'],self.rgb['b']])*self.brightness/100, abs_tol = 2):
+                if math.isclose(attr_br, max([self.rgb['r'], self.rgb['g'], self.rgb['b']]) * self.brightness / 100, abs_tol=2):
                     self.hub.combo_control(True, self.brightness, 254, attr_rgb, controller, self.mesh_id, seq)
                 else:
-                    self.hub.combo_control(True, round(attr_br*100/255), 255, [255,255,255], controller, self.mesh_id, seq)
+                    self.hub.combo_control(True, round(attr_br * 100 / 255), 255, [255, 255, 255], controller, self.mesh_id, seq)
             elif attr_rgb is None and attr_ct is None and attr_br is not None:
-                self.hub.combo_control(True, round(attr_br*100/255), 255, [255,255,255], controller, self.mesh_id, seq)
+                self.hub.combo_control(True, round(attr_br * 100 / 255), 255, [255, 255, 255], controller, self.mesh_id, seq)
             elif attr_rgb is not None and attr_br is None:
                 self.hub.combo_control(True, self.brightness, 254, attr_rgb, controller, self.mesh_id, seq)
             elif attr_ct is not None:
-                ct = round(100*(self.max_mireds - attr_ct)/(self.max_mireds - self.min_mireds))
+                ct = round(100 * (self.max_mireds - attr_ct) / (self.max_mireds - self.min_mireds))
                 self.hub.set_color_temp(ct, controller, self.mesh_id, seq)
             else:
                 self.hub.turn_on(controller, self.mesh_id, seq)
@@ -707,6 +708,7 @@ class CyncUserData:
         auth_data = {'corp_id': "1007d2ad150c4000", 'email': self.username, 'password': self.password}
         async with aiohttp.ClientSession() as session:
             async with session.post(API_AUTH, json=auth_data) as resp:
+                _LOGGER.error(f'Auth Request returned status {resp.status}')
                 if resp.status == 200:
                     self.user_credentials = await resp.json()
                     login_code = bytearray.fromhex('13000000') + (10 + len(self.user_credentials['authorize'])).to_bytes(1,'big') + bytearray.fromhex('03') + self.user_credentials['user_id'].to_bytes(4,'big') + len(self.user_credentials['authorize']).to_bytes(2,'big') + bytearray(self.user_credentials['authorize'],'ascii') + bytearray.fromhex('0000b4')
@@ -725,9 +727,10 @@ class CyncUserData:
 
     async def auth_two_factor(self, code):
         """Authenticate with 2 Factor Code."""
-        two_factor_data = {'corp_id': "1007d2ad150c4000", 'email': self.username,'password': self.password, 'two_factor': code, 'resource':"abcdefghijklmnop"}
+        two_factor_data = {'corp_id': "1007d2ad150c4000", 'email': self.username,'password': self.password, 'two_factor': code, 'resource':"1"}
         async with aiohttp.ClientSession() as session:
             async with session.post(API_2FACTOR_AUTH,json=two_factor_data) as resp:
+                _LOGGER.error(f'2 factor Auth Request returned status {resp.status}')
                 if resp.status == 200:
                     self.user_credentials = await resp.json()
                     login_code = bytearray.fromhex('13000000') + (10 + len(self.user_credentials['authorize'])).to_bytes(1,'big') + bytearray.fromhex('03') + self.user_credentials['user_id'].to_bytes(4,'big') + len(self.user_credentials['authorize']).to_bytes(2,'big') + bytearray(self.user_credentials['authorize'],'ascii') + bytearray.fromhex('0000b4')
@@ -743,86 +746,97 @@ class CyncUserData:
         devices = {}
         rooms = {}
         homes = await self._get_homes()
+        _LOGGER.error(f'Recieved details about homes on Cync account: {homes}')
         for home in homes:
             home_info = await self._get_home_properties(home['product_id'], home['id'])
-            if home_info.get('groupsArray',False) and home_info.get('bulbsArray',False) and len(home_info['groupsArray']) > 0 and len(home_info['bulbsArray']) > 0:
+            # Handle {'error': 'device property not exists')
+            if "error" in home_info:
+                _LOGGER.warning(f"Home {home['id']} returned an error: {home_info['error']}")
+                continue
+            if home_info.get('groupsArray', False) and home_info.get('bulbsArray', False) and len(home_info['groupsArray']) > 0 and len(home_info['bulbsArray']) > 0:
                 home_id = str(home['id'])
-                bulbs_array_length = max([((device['deviceID'] % home['id']) % 1000) + (int((device['deviceID'] % home['id']) / 1000)*256) for device in home_info['bulbsArray']]) + 1
-                home_devices[home_id] = [""]*(bulbs_array_length)
+                bulbs_array_length = max([((device['deviceID'] % home['id']) % 1000) + (int((device['deviceID'] % home['id']) / 1000) * 256) for device in home_info['bulbsArray']]) + 1
+                home_devices[home_id] = [""] * (bulbs_array_length)
                 home_controllers[home_id] = []
                 for device in home_info['bulbsArray']:
                     device_type = device['deviceType']
                     device_id = str(device['deviceID'])
-                    current_index = ((device['deviceID'] % home['id']) % 1000) + (int((device['deviceID'] % home['id']) / 1000)*256)
+                    current_index = ((device['deviceID'] % home['id']) % 1000) + (int((device['deviceID'] % home['id']) / 1000) * 256)
                     home_devices[home_id][current_index] = device_id
-                    devices[device_id] = {'name':device['displayName'],
-                        'mesh_id':current_index,
-                        'switch_id':str(device.get('switchID',0)), 
-                        'ONOFF': device_type in Capabilities['ONOFF'], 
-                        'BRIGHTNESS': device_type in Capabilities["BRIGHTNESS"], 
-                        "COLORTEMP":device_type in Capabilities["COLORTEMP"], 
-                        "RGB": device_type in Capabilities["RGB"], 
-                        "MOTION": device_type in Capabilities["MOTION"], 
-                        "AMBIENT_LIGHT": device_type in Capabilities["AMBIENT_LIGHT"], 
-                        "WIFICONTROL": device_type in Capabilities["WIFICONTROL"],
-                        "PLUG" : device_type in Capabilities["PLUG"],
-                        "FAN" : device_type in Capabilities["FAN"],
-                        'home_name':home['name'], 
-                        'room':'', 
-                        'room_name':''
-                    }
+                    devices[device_id] = {'name': device['displayName'],
+                                        'mesh_id': current_index,
+                                        'switch_id': str(device.get('switchID', 0)),
+                                        'ONOFF': device_type in Capabilities['ONOFF'],
+                                        'BRIGHTNESS': device_type in Capabilities["BRIGHTNESS"],
+                                        "COLORTEMP": device_type in Capabilities["COLORTEMP"],
+                                        "RGB": device_type in Capabilities["RGB"],
+                                        "MOTION": device_type in Capabilities["MOTION"],
+                                        "AMBIENT_LIGHT": device_type in Capabilities["AMBIENT_LIGHT"],
+                                        "WIFICONTROL": device_type in Capabilities["WIFICONTROL"],
+                                        "PLUG": device_type in Capabilities["PLUG"],
+                                        "FAN": device_type in Capabilities["FAN"],
+                                        'home_name': home['name'],
+                                        'room': '',
+                                        'room_name': ''
+                                        }
                     if str(device_type) in Capabilities['MULTIELEMENT'] and current_index < 256:
                         devices[device_id]['MULTIELEMENT'] = Capabilities['MULTIELEMENT'][str(device_type)]
-                    if devices[device_id].get('WIFICONTROL',False) and 'switchID' in device and device['switchID'] > 0:
+                    if devices[device_id].get('WIFICONTROL', False) and 'switchID' in device and device['switchID'] > 0:
                         switchID_to_homeID[str(device['switchID'])] = home_id
                         devices[device_id]['switch_controller'] = device['switchID']
                         home_controllers[home_id].append(device['switchID'])
+                _LOGGER.error(f"After processing bulbsArray for home {home_id}: devices={devices}, home_devices={home_devices}, home_controllers={home_controllers}, switchID_to_homeID={switchID_to_homeID}")
                 if len(home_controllers[home_id]) == 0:
                     for device in home_info['bulbsArray']:
                         device_id = str(device['deviceID'])
-                        devices.pop(device_id,'')
-                    home_devices.pop(home_id,'')
-                    home_controllers.pop(home_id,'')
+                        devices.pop(device_id, '')
+                    home_devices.pop(home_id, '')
+                    home_controllers.pop(home_id, '')
                 else:
                     for room in home_info['groupsArray']:
-                        if (len(room.get('deviceIDArray',[])) + len(room.get('subgroupIDArray',[]))) > 0:
+                        if (len(room.get('deviceIDArray', [])) + len(room.get('subgroupIDArray', []))) > 0:
                             room_id = home_id + '-' + str(room['groupID'])
                             room_controller = home_controllers[home_id][0]
-                            available_room_controllers = [(id%1000) + (int(id/1000)*256) for id in room.get('deviceIDArray',[]) if 'switch_controller' in devices[home_devices[home_id][(id%1000)+(int(id/1000)*256)]]]
+                            available_room_controllers = [(id % 1000) + (int(id / 1000) * 256) for id in room.get('deviceIDArray', []) if 'switch_controller' in devices[home_devices[home_id][(id % 1000) + (int(id / 1000) * 256)]]]
                             if len(available_room_controllers) > 0:
                                 room_controller = devices[home_devices[home_id][available_room_controllers[0]]]['switch_controller']
-                            for id in room.get('deviceIDArray',[]):
-                                id = (id % 1000) + (int(id / 1000)*256)
+                            for id in room.get('deviceIDArray', []):
+                                id = (id % 1000) + (int(id / 1000) * 256)
                                 devices[home_devices[home_id][id]]['room'] = room_id
                                 devices[home_devices[home_id][id]]['room_name'] = room['displayName']
-                                if 'switch_controller' not in devices[home_devices[home_id][id]] and devices[home_devices[home_id][id]].get('ONOFF',False):
+                                if 'switch_controller' not in devices[home_devices[home_id][id]] and devices[home_devices[home_id][id]].get('ONOFF', False):
                                     devices[home_devices[home_id][id]]['switch_controller'] = room_controller
-                            rooms[room_id] = {'name':room['displayName'],
-                                'mesh_id' : room['groupID'], 
-                                'room_controller' : room_controller,
-                                'home_name' : home['name'], 
-                                'switches' : [home_devices[home_id][(i%1000)+(int(i/1000)*256)] for i in room.get('deviceIDArray',[]) if devices[home_devices[home_id][(i%1000)+(int(i/1000)*256)]].get('ONOFF',False)],
-                                'isSubgroup' : room.get('isSubgroup',False),
-                                'subgroups' : [home_id + '-' + str(subgroup) for subgroup in room.get('subgroupIDArray',[])]
+                            _LOGGER.error(f"Updated devices for room {room_id}: {devices}")
+                            rooms[room_id] = {
+                                'name': room['displayName'],
+                                'mesh_id': room['groupID'],
+                                'room_controller': room_controller,
+                                'home_name': home['name'],
+                                'switches': [home_devices[home_id][(i % 1000) + (int(i / 1000) * 256)] for i in room.get('deviceIDArray', []) if devices[home_devices[home_id][(i % 1000) + (int(i / 1000) * 256)]].get('ONOFF', False)],
+                                'isSubgroup': room.get('isSubgroup', False),
+                                'subgroups': [home_id + '-' + str(subgroup) for subgroup in room.get('subgroupIDArray', [])]
                             }
-                    for room,room_info in rooms.items():
-                        if not room_info.get("isSubgroup",False) and len(subgroups := room_info.get("subgroups",[]).copy()) > 0:
+                            _LOGGER.error(f"Updated rooms with room {room_id}: {rooms}")
+                    for room, room_info in rooms.items():
+                        if not room_info.get("isSubgroup", False) and len(subgroups := room_info.get("subgroups", []).copy()) > 0:
                             for subgroup in subgroups:
-                                if rooms.get(subgroup,None):
+                                if rooms.get(subgroup, None):
                                     rooms[subgroup]["parent_room"] = room_info["name"]
                                 else:
                                     room_info['subgroups'].pop(room_info['subgroups'].index(subgroup))
-                                    
+                    _LOGGER.error(f"Final rooms after processing subgroups: {rooms}")
+        _LOGGER.error({'rooms': rooms, 'devices': devices, 'home_devices': home_devices, 'home_controllers': home_controllers, 'switchID_to_homeID': switchID_to_homeID})
         if len(rooms) == 0 or len(devices) == 0 or len(home_controllers) == 0 or len(home_devices) == 0 or len(switchID_to_homeID) == 0:
             raise InvalidCyncConfiguration
         else:
-            return {'rooms':rooms, 'devices':devices, 'home_devices':home_devices, 'home_controllers':home_controllers, 'switchID_to_homeID':switchID_to_homeID}
+            return {'rooms': rooms, 'devices': devices, 'home_devices': home_devices, 'home_controllers': home_controllers, 'switchID_to_homeID': switchID_to_homeID}
 
     async def _get_homes(self):
         """Get a list of devices for a particular user."""
         headers = {'Access-Token': self.user_credentials['access_token']}
         async with aiohttp.ClientSession() as session:
             async with session.get(API_DEVICES.format(user=self.user_credentials['user_id']), headers=headers) as resp:
+                _LOGGER.error(f'Get Homes Request returned status {resp.status}')
                 response  = await resp.json()
                 return response
 
@@ -832,6 +846,7 @@ class CyncUserData:
         async with aiohttp.ClientSession() as session:
             async with session.get(API_DEVICE_INFO.format(product_id=product_id, device_id=device_id), headers=headers) as resp:
                 response = await resp.json()
+                _LOGGER.error(response)
                 return response
 
 class LostConnection(Exception):
