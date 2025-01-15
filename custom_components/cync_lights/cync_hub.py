@@ -406,7 +406,7 @@ class CyncRoom:
                 controller = self.controllers[attempts % len(self.controllers)]
             else:
                 controller = self.default_controller
-            _LOGGER.debug(f"Sending turn_on command to controller {controller} with seq {seq}")
+            _LOGGER.error(f"Sending turn_on command to controller {controller} with seq {seq}")
             if attr_rgb is not None and attr_br is not None:
                 if math.isclose(attr_br, max([self.rgb['r'], self.rgb['g'], self.rgb['b']]) * self.brightness / 100, abs_tol=2):
                     self.hub.combo_control(True, self.brightness, 254, attr_rgb, controller, self.mesh_id, seq)
@@ -557,7 +557,7 @@ class CyncSwitch:
                 controller = self.controllers[attempts % len(self.controllers)]
             else:
                 controller = self.default_controller
-            _LOGGER.debug(f"Sending turn_on command to controller {controller} with seq {seq}")
+            _LOGGER.error(f"Sending turn_on command to controller {controller} with seq {seq}")
             if attr_rgb is not None and attr_br is not None:
                 if math.isclose(attr_br, max([self.rgb['r'], self.rgb['g'], self.rgb['b']]) * self.brightness / 100, abs_tol=2):
                     self.hub.combo_control(True, self.brightness, 254, attr_rgb, controller, self.mesh_id, seq)
