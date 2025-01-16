@@ -143,6 +143,10 @@ class CyncConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "ambient_light_sensors",
                     description = {"suggested_value" : [device_id for device_id,device_info in self.data["data"]["cync_config"]["devices"].items() if device_info['AMBIENT_LIGHT']]},
                 ): cv.multi_select({device_id : f'{device_info["name"]} ({device_info["room_name"]}:{device_info["home_name"]})' for device_id,device_info in self.data["data"]["cync_config"]["devices"].items() if device_info.get('AMBIENT_LIGHT',False)}),
+                vol.Optional(
+                    "plugs",
+                    description = {"suggested_value" : [device_id for device_id,device_info in self.entry.data["cync_config"]["devices"].items() if device_info['PLUG']]},
+                ): cv.multi_select({device_id : f'{device_info["name"]} ({device_info["room_name"]}:{device_info["home_name"]})' for device_id,device_info in self.entry.data["cync_config"]["devices"].items() if device_info.get('PLUG',False)}),
             }
         )
         
@@ -277,6 +281,10 @@ class CyncOptionsFlowHandler(config_entries.OptionsFlow):
                     "ambient_light_sensors",
                     description = {"suggested_value" : [sensor for sensor in self.entry.options["ambient_light_sensors"] if sensor in self.entry.data["cync_config"]["devices"].keys()]},
                 ): cv.multi_select({device_id : f'{device_info["name"]} ({device_info["room_name"]}:{device_info["home_name"]})' for device_id,device_info in self.entry.data["cync_config"]["devices"].items() if device_info.get('AMBIENT_LIGHT',False)}),
+                vol.Optional(
+                    "plugs",
+                    description = {"suggested_value" : [device_id for device_id,device_info in self.entry.data["cync_config"]["devices"].items() if device_info['PLUG']]},
+                ): cv.multi_select({device_id : f'{device_info["name"]} ({device_info["room_name"]}:{device_info["home_name"]})' for device_id,device_info in self.entry.data["cync_config"]["devices"].items() if device_info.get('PLUG',False)}),
             }
         )
 
