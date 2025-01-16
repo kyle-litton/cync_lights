@@ -133,8 +133,8 @@ class CyncConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ): cv.multi_select({room : f'{room_info["name"]} ({room_info.get("parent_room","")}:{room_info["home_name"]})' for room,room_info in self.data["data"]["cync_config"]["rooms"].items() if self.data["data"]["cync_config"]["rooms"][room]['isSubgroup']}),
                 vol.Optional(
                     "switches",
-                    description = {"suggested_value" : [device_id for device_id,device_info in self.data["data"]["cync_config"]["devices"].items() if device_info['FAN']]},
-                ): cv.multi_select({switch_id : f'{sw_info["name"]} ({sw_info["room_name"]}:{sw_info["home_name"]})' for switch_id,sw_info in self.data["data"]["cync_config"]["devices"].items() if sw_info.get('ONOFF',False) and sw_info.get('MULTIELEMENT',1) == 1}),
+                    description = {"suggested_value" : [device_id for device_id,device_info in self.data["data"]["cync_config"]["devices"].items() if device_info['FAN'] or device_info['PLUG']]},
+                ): cv.multi_select({switch_id : f'{sw_info["name"]} ({sw_info["room_name"]}:{sw_info["home_name"]})' for switch_id,sw_info in self.data["data"]["cync_config"]["devices"].items() if (sw_info.get('ONOFF',False) and sw_info.get('MULTIELEMENT',1) == 1) or sw_info.get('PLUG',False)}),
                 vol.Optional(
                     "motion_sensors",
                     description = {"suggested_value" : [device_id for device_id,device_info in self.data["data"]["cync_config"]["devices"].items() if device_info['MOTION']]},
@@ -143,10 +143,6 @@ class CyncConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "ambient_light_sensors",
                     description = {"suggested_value" : [device_id for device_id,device_info in self.data["data"]["cync_config"]["devices"].items() if device_info['AMBIENT_LIGHT']]},
                 ): cv.multi_select({device_id : f'{device_info["name"]} ({device_info["room_name"]}:{device_info["home_name"]})' for device_id,device_info in self.data["data"]["cync_config"]["devices"].items() if device_info.get('AMBIENT_LIGHT',False)}),
-                vol.Optional(
-                    "plugs",
-                    description = {"suggested_value" : [device_id for device_id,device_info in self.entry.data["cync_config"]["devices"].items() if device_info['PLUG']]},
-                ): cv.multi_select({device_id : f'{device_info["name"]} ({device_info["room_name"]}:{device_info["home_name"]})' for device_id,device_info in self.entry.data["cync_config"]["devices"].items() if device_info.get('PLUG',False)}),
             }
         )
         
@@ -272,7 +268,7 @@ class CyncOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(
                     "switches",
                     description = {"suggested_value" : [sw for sw in self.entry.options["switches"] if sw in self.entry.data["cync_config"]["devices"].keys()]},
-                ): cv.multi_select({switch_id : f'{sw_info["name"]} ({sw_info["room_name"]}:{sw_info["home_name"]})' for switch_id,sw_info in self.entry.data["cync_config"]["devices"].items() if sw_info.get('ONOFF',False) and sw_info.get('MULTIELEMENT',1) == 1}),
+                ): cv.multi_select({switch_id : f'{sw_info["name"]} ({sw_info["room_name"]}:{sw_info["home_name"]})' for switch_id,sw_info in self.entry.data["cync_config"]["devices"].items() if (sw_info.get('ONOFF',False) and sw_info.get('MULTIELEMENT',1) == 1) or sw_info.get('PLUG',False)}),
                 vol.Optional(
                     "motion_sensors",
                     description = {"suggested_value" : [sensor for sensor in self.entry.options["motion_sensors"] if sensor in self.entry.data["cync_config"]["devices"].keys()]},
@@ -281,10 +277,6 @@ class CyncOptionsFlowHandler(config_entries.OptionsFlow):
                     "ambient_light_sensors",
                     description = {"suggested_value" : [sensor for sensor in self.entry.options["ambient_light_sensors"] if sensor in self.entry.data["cync_config"]["devices"].keys()]},
                 ): cv.multi_select({device_id : f'{device_info["name"]} ({device_info["room_name"]}:{device_info["home_name"]})' for device_id,device_info in self.entry.data["cync_config"]["devices"].items() if device_info.get('AMBIENT_LIGHT',False)}),
-                vol.Optional(
-                    "plugs",
-                    description = {"suggested_value" : [device_id for device_id,device_info in self.entry.data["cync_config"]["devices"].items() if device_info['PLUG']]},
-                ): cv.multi_select({device_id : f'{device_info["name"]} ({device_info["room_name"]}:{device_info["home_name"]})' for device_id,device_info in self.entry.data["cync_config"]["devices"].items() if device_info.get('PLUG',False)}),
             }
         )
 
